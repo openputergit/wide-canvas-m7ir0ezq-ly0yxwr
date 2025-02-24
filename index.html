@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Language Converter - Mother Tongue</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #67c4e6, #3498db);
+            min-height: 100vh;
+        }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .loading {
+            position: relative;
+        }
+        .loading:after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            top: 50%;
+            left: 50%;
+            margin: -10px 0 0 -10px;
+            border: 3px solid #fff;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to {transform: rotate(360deg);}
+        }
+    </style>
+</head>
+<body class="p-4">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-4xl md:text-5xl font-bold text-center text-white mb-8 mt-4">
+            Conversion in your Mother Tongue
+        </h1>
+        
+        <div class="glass-effect rounded-xl p-6 shadow-lg">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Source Language -->
+                <div class="flex flex-col space-y-4">
+                    <div class="flex justify-between items-center">
+                        <select id="sourceLanguage" class="bg-white/90 rounded-lg px-4 py-2 w-48">
+                            <option value="en">English</option>
+                            <option value="hi">Hindi</option>
+                            <option value="mr">Marathi</option>
+                            <option value="gu">Gujarati</option>
+                            <option value="ur">Urdu</option>
+                            <option value="ta">Tamil</option>
+                            <option value="te">Telugu</option>
+                        </select>
+                        <button onclick="clearText('sourceText')" class="text-white hover:text-gray-200">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                    <textarea id="sourceText" class="w-full h-48 p-4 rounded-lg resize-none bg-white/90" 
+                        placeholder="Enter text here..."></textarea>
+                </div>
+
+                <!-- Target Language -->
+                <div class="flex flex-col space-y-4">
+                    <div class="flex justify-between items-center">
+                        <select id="targetLanguage" class="bg-white/90 rounded-lg px-4 py-2 w-48">
+                            <option value="hi">Hindi</option>
+                            <option value="en">English</option>
+                            <option value="mr">Marathi</option>
+                            <option value="gu">Gujarati</option>
+                            <option value="ur">Urdu</option>
+                            <option value="ta">Tamil</option>
+                            <option value="te">Telugu</option>
+                        </select>
+                        <button onclick="copyText()" class="text-white hover:text-gray-200">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                    </div>
+                    <textarea id="targetText" class="w-full h-48 p-4 rounded-lg resize-none bg-white/90" 
+                        placeholder="Translation will appear here..." readonly></textarea>
+                </div>
+            </div>
+
+            <div class="flex justify-center mt-6">
+                <button onclick="swapLanguages()" class="mx-2 bg-white/20 hover:bg-white/30 text-white px-6 py-2 rounded-lg transition-all duration-300">
+                    <i class="bi bi-arrow-left-right"></i> Swap
+                </button>
+                <button id="translateBtn" onclick="translateText()" class="mx-2 bg-white/20 hover:bg-white/30 text-white px-6 py-2 rounded-lg transition-all duration-300">
+                    <i class="bi bi-translate"></i> Translate
+                </button>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        <div id="errorMessage" class="hidden mt-4 p-4 bg-red-500/80 text-white rounded-lg text-center">
+            Translation service is currently unavailable. Please try Google Translate instead.
+            <a href="https://translate.google.com" target="_blank" class="underline ml-2">Open Google Translate</a>
+        </div>
+    </div>
+
+    <script>
+        async function translateText() {
+            const sourceText = document.getElementById('sourceText').value;
+            const sourceLanguage = document.getElementById('sourceLanguage').value;
+            const targetLanguage = document.getElementById('targetLanguage').value;
+            const translateBtn = document.getElementById('translateBtn');
+            const errorMessage = document.getElementById('errorMessage');
+            
+            if (!sourceText) {
+                alert('Please enter some text to translate');
+                return;
+            }
+
+            // Add loading state
+            translateBtn.disabled = true;
+            translateBtn.classList.add('loading');
+            errorMessage.classList.add('hidden');
+
+            try {
+                const response = await axios.post('https://libretranslate.de/translate', {
+                    q: sourceText,
+                    source: sourceLanguage,
+                    target: targetLanguage
+                });
+                
+                document.getElementById('targetText').value = response.data.translatedText;
+            } catch (error) {
+                console.error('Translation error:', error);
+                errorMessage.classList.remove('hidden');
+                document.getElementById('targetText').value = '';
+            } finally {
+                // Remove loading state
+                translateBtn.disabled = false;
+                translateBtn.classList.remove('loading');
+            }
+        }
+
+        function swapLanguages() {
+            const sourceLanguage = document.getElementById('sourceLanguage');
+            const targetLanguage = document.getElementById('targetLanguage');
+            const sourceText = document.getElementById('sourceText');
+            const targetText = document.getElementById('targetText');
+
+            [sourceLanguage.value, targetLanguage.value] = [targetLanguage.value, sourceLanguage.value];
+            [sourceText.value, targetText.value] = [targetText.value, sourceText.value];
+        }
+
+        function clearText(elementId) {
+            document.getElementById(elementId).value = '';
+        }
+
+        function copyText() {
+            const targetText = document.getElementById('targetText');
+            targetText.select();
+            document.execCommand('copy');
+            
+            const copyButton = document.querySelector('.bi-clipboard').parentElement;
+            copyButton.innerHTML = '<i class="bi bi-check2"></i>';
+            setTimeout(() => {
+                copyButton.innerHTML = '<i class="bi bi-clipboard"></i>';
+            }, 2000);
+        }
+
+        // Auto-resize textareas
+        const textareas = document.querySelectorAll('textarea');
+        textareas.forEach(textarea => {
+            textarea.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = this.scrollHeight + 'px';
+            });
+        });
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
